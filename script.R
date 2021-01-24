@@ -31,7 +31,30 @@ plot(thsd)
 c<-read.csv("prs_deaths", sep="\t",header=T)  ##Fields in prs_deaths - POP,PRS,District,No.of Deaths
 ggscatter(c,x="PRS",y="Deaths",add="reg.line",conf.int=T, cor.coef=T, cor.method = "spearman",ylab = "No.of deaths due to COVID",title = "Spearman correlation")  ##correlation plot
 
-######
+       
+########################################################
+## VarLD - Comparison of LD around SNPs
+##Genotype file 12 format
+system(paste(“/opt/apps/plink-1.07-x86_64/plink --bfile CEU_1000G_all --chr 12 --from-bp 108383145 --to-bp 118375718 --extract 1000g_snps_list  --recode12 --transpose --tab --noweb --out CEU_rs10735079_10mb”, sep=” “)
+system(paste(“/opt/apps/plink-1.07-x86_64/plink --bfile ITU_1000G_all --chr 12 --from-bp 108383145 --to-bp 118375718 --extract 1000g_snps_list  --recode12 --transpose --tab --noweb --out ITU_rs10735079_10mb”, sep=” “)
+system(paste(“/opt/apps/plink-1.07-x86_64/plink --bfile PJL_1000G_all --chr 12 --from-bp 108383145 --to-bp 118375718 --extract 1000g_snps_list  --recode12 --transpose --tab --noweb --out PJL_rs10735079_10mb”, sep=” “)
+
+##Input SNP pos genotype1 genotype2 …
+##Convert Genotype file to 1234 format
+system(paste(“sed  -r 's/(\s+)?\S+//3' CEU_rs10735079_10mb.tped | sed  -r 's/(\s+)?\S+//1' | sed 's/2 2/1/g'  | sed 's/1 1/3/g' | sed 's/2 1/2/g' | sed 's/1 2/2/g' | sed 's/2 0/4/g' | sed 's/0 2/4/g' | sed 's/0 1/4/g' | sed 's/0 0/4/g' | sed 's/\trs/rs/g' > CEU_rs10735079_infile”, sep=” “)
+system(paste(“sed  -r 's/(\s+)?\S+//3' ITU_rs10735079_10mb.tped | sed  -r 's/(\s+)?\S+//1' | sed 's/2 2/1/g'  | sed 's/1 1/3/g' | sed 's/2 1/2/g' | sed 's/1 2/2/g' | sed 's/2 0/4/g' | sed 's/0 2/4/g' | sed 's/0 1/4/g' | sed 's/0 0/4/g' | sed 's/\trs/rs/g' > ITU_rs10735079_infile”, sep=” “)
+system(paste(“sed  -r 's/(\s+)?\S+//3' PJL_rs10735079_10mb.tped | sed  -r 's/(\s+)?\S+//1' | sed 's/2 2/1/g'  | sed 's/1 1/3/g' | sed 's/2 1/2/g' | sed 's/1 2/2/g' | sed 's/2 0/4/g' | sed 's/0 2/4/g' | sed 's/0 1/4/g' | sed 's/0 0/4/g' | sed 's/\trs/rs/g' > PJL_rs10735079_infile”, sep=” “)
+
+##VarLD: 
+system(paste(“java -jar rgenetics-1.0.jar -p VarLD CEU_rs10735079_infile ITU_rs10735079_infile -o CEU_ITU_rs10735079",sep=" ")
+system(paste(“java -jar rgenetics-1.0.jar -p VarLD PJL_rs10735079_infile ITU_rs10735079_infile -o PJL_ITU_rs10735079",sep=" ")
+
+##Plot r
+dd<-read.csv("VARLD_ALL", sep="\t", header=T)   ## concatenate results of CEU_ITU_rs10735079 and PJL_ITU_rs10735079 and add population labels
+dd$PhysicalPosition <- dd$position/1000000
+ggplot(dd,aes(PhysicalPosition,standardized_score))+geom_point(aes(PhysicalPosition,standardized_score,color= Population),alpha=0.5)+xlab("Physical Position (Mb)")+theme_minimal()+scale_colour_manual(values=c("red","blue","green","black","orange","violet"))
+
+#########################################################
 ##Spatial Plot-- Modified verion of the already avalable code based on IDW algorithm
 library(rgdal)
 library(tmap)
