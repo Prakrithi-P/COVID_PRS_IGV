@@ -49,10 +49,18 @@ system(paste(“sed  -r 's/(\s+)?\S+//3' PJL_rs10735079_10mb.tped | sed  -r 's/(
 system(paste(“java -jar rgenetics-1.0.jar -p VarLD CEU_rs10735079_infile ITU_rs10735079_infile -o CEU_ITU_rs10735079",sep=" ")
 system(paste(“java -jar rgenetics-1.0.jar -p VarLD PJL_rs10735079_infile ITU_rs10735079_infile -o PJL_ITU_rs10735079",sep=" ")
 
-##Plot r
+##Plot r ---> To plot a region
 dd<-read.csv("VARLD_ALL", sep="\t", header=T)   ## concatenate results of CEU_ITU_rs10735079 and PJL_ITU_rs10735079 and add population labels
 dd$PhysicalPosition <- dd$position/1000000
 ggplot(dd,aes(PhysicalPosition,standardized_score))+geom_point(aes(PhysicalPosition,standardized_score,color= Population),alpha=0.5)+xlab("Physical Position (Mb)")+theme_minimal()+scale_colour_manual(values=c("red","blue","green","black","orange","violet"))
+
+## To show variants and their LD patterns across multiple chromosomes
+library(qqman)
+d<-read.csv("varld_maf1_all", header=TRUE, sep="\t")
+h<-read.csv("highlight_100", sep="\t", header=T)
+hs<-as.character(h$pos)
+manhattan(d, chr = "Chr", bp = "pos", p = "Standardized_score", snp = "pos",
+col = c("gray10", "gray60"), chrlabs = NULL,suggestiveline = 3.37, genomewideline = 6.87,highlight = hs, logp = FALSE,ylim=c(-2,20), ylab=”Standardized VarLD score”)
 
 #########################################################
 ##Spatial Plot-- Modified verion of the already avalable code based on IDW algorithm
