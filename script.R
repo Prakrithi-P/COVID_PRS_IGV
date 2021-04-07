@@ -168,4 +168,3 @@ tm_shape(r.m) +
             title="PRS") + 
   tm_shape(p) + tm_dots(size=0.02) +
   tm_legend(legend.outside=TRUE)+tm_legend(legend.outside=TRUE)+tm_text("POP", just="top", xmod=0.7, size = 0.6)
-       
