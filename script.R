@@ -5,7 +5,7 @@ library(ggpubr)
 library(dplyr)
 
 ##PRS- PLINK
-system(paste(“plink --bfile ../../../IGV_7l --score info.txt 1 2 3 header --extract snps --out PRS”, sep=” “)   #Fields in info.txt - SNP Risk_Allele OR
+system(paste(“plink --bfile ../../../IGV_7l --score top100_inIGV_summary 1 2 3 header --extract snps --out PRS”, sep=” “)   #Fields in info.txt - SNP Risk_Allele OR
 ## PRS.profile is updated with Population labels (POP)
 d<-read.csv("PRS.profile", sep="\t", header=T) ##reading PRS scores 
 ##median scores for individuals in each population
