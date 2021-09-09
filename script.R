@@ -5,7 +5,7 @@ library(ggpubr)
 library(dplyr)
 
 ##PRS- PLINK
-system(paste(“plink --bfile ../../../IGV_7l --score top100_inIGV_summary 1 2 3 header --extract snps --out PRS”, sep=” “)   #Fields in info.txt - SNP Risk_Allele OR
+system(paste(“plink --bfile ../../../IGV_7l --score top100_inIGV_summary 1 2 3 header --extract snps --out PRS”, sep=” “)   #Tab separated Fields in top100_inIGV_summary - SNP Risk_Allele OR
 ## PRS.profile is updated with Population labels (POP)
 d<-read.csv("PRS.profile", sep="\t", header=T) ##reading PRS scores 
 ##median scores for individuals in each population
@@ -27,9 +27,12 @@ par(mar=c(5,15,5,1))
 plot(thsd)
 
 ## District level COVID19 information for corresponding IGV pops collected from https://www.covid19india.org/ and https://covid19.assam.gov.in/district/
-#PRS-Mortality - Pearson's correlation
-c<-read.csv("prs_deaths", sep="\t",header=T)  ##Fields in prs_deaths - POP,PRS,District,No.of Deaths
-ggscatter(c,x="PRS",y="Deaths",add="reg.line",conf.int=T, cor.coef=T, cor.method = "pearson",ylab = "No.of deaths due to COVID")  ##correlation plot
+#PRS-Mortality ~ PRS + Potential confounders (age, sex, population density) - GLM
+d<-read.csv("prs_deaths", sep="\t", header=T)
+m<-glm(Deaths.million~PRS+ X..Population.above.45+Population.density..km2.+Sex.ratio + offset(log(Population)), family="poisson",d)
+summary(m)
+#repeat same on removing outliers and compare results
+pseudoR2<-(m$null.deviance-m$deviance)/m$null.deviance
 
        
 ########################################################
@@ -79,7 +82,7 @@ for (i in 1:n.length.percentile){
 [1] "varLD threshold for 0.999 = 6.87171244835101"
 [1] "varLD threshold for 0.9999 = 12.4041619384797"
 
-## To show variants and their LD patterns across multiple chromosomes
+## To show variants and their LD patterns across multiple chromosomes - Manhattan plot
 library(qqman)
 ##add chromosome labels and concatenate the chr-wise standardized output files and use as follows:       
 d<-read.csv("varld_standardized.out", header=TRUE, sep="\t")
@@ -168,3 +171,44 @@ tm_shape(r.m) +
             title="PRS") + 
   tm_shape(p) + tm_dots(size=0.02) +
   tm_legend(legend.outside=TRUE)+tm_legend(legend.outside=TRUE)+tm_text("POP", just="top", xmod=0.7, size = 0.6)
+       
+
+       
+       
+#GLM for PRS calculated with non-risk SNPs as negative control: 1000 iterations:
+ 
+for i in {1..1000} ; do ../../plink_linux_x86_64_20190215/plink --bfile ../../IGV/IGV_7l --score random$i.info 1 2 3 --out random$i.PRS ; done > 1000_prs.log
+for i in {1..1000} ; do awk 'NR>1 {print $2}' random$i.PRS.nopred > random$i.flip; done
+for i in {1..1000} ; do ../../plink_linux_x86_64_20190215/plink --bfile ../../IGV/IGV_7l --score random$i.info 1 2 3 --flip random$i.flip --out random$i.PRS ; done > 1000_prs_flip.log
+
+for i in {1..1000} ; do paste IGV_485_pop random$i.PRS.profile > random$i.ind.PRS ; done
+for i in {1..1000} ; do awk '{print $1"\t"$3"\t"$7}' random$i.ind.PRS > rand$i.indiv.prs ; done
+R - to calc pop PRS …
+for (i in 2:1000) {
+ d<-read.csv(paste("rand",i,".indiv.prs", sep=""), sep="\t", header=T)
+ dd<-d %>%
+     group_by(POP) %>%
+     summarise(median(SCORE))
+     write.table(dd, paste("random",i,"_pop_prs", sep=""), sep="\t", quote=F)
+ }
+
+for i in {1..1000} ; do awk '!/OGWIP|IEWLP2|TBNSP1/ {print }' random$i_pop_prs > random$i.pop.prs.final ; done
+for i in {1..1000} ; do paste mortality random$i.pop.prs.final | sed 's/median(SCORE)/PRS/g' > random$i.prs.mortality; done
+
+for (i in 1:1000) {
+	d<-read.csv(paste("rand",i,".indiv.prs", sep=""), sep="\t", header=T)
+	dd<-d %>%
+    group_by(POP) %>%
+    summarise(median(SCORE))
+    write.table(dd, paste("random",i,"_pop_prs", sep=""), sep="\t", quote=F)
+}
+
+for (i in 1:1000) {
+d<-read.csv(paste("random",i,".prs.mortality",sep=""), sep="\t", header=T)
+m<-glm(Deaths.million~PRS+ X..Population.above.45+Population.density..km2.+Sex.ratio + offset(log(Population)), family="poisson",d)
+summary(m)
+coef(m)
+coef(summary(m))[,'Pr(>|z|)']
+write.table(coef(summary(m))[,'Pr(>|z|)'], paste("random",i,"glm_p", sep=""), sep="\t", quote=F)
+write.table(coef(m), paste("random",i,"glm_coef", sep=""), sep="\t", quote=F)
+}
