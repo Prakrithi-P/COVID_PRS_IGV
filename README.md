@@ -7,3 +7,5 @@ References for the spatial plot
 - https://mgimond.github.io/Spatial/interpolation-in-r.html
 
 - https://mgimond.github.io/MEGUG2016/Tutorial.html
+
+- The work licensed under http://creativecommons.org/licenses/by-nc/4.0/
