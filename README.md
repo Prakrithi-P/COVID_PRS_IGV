@@ -4,5 +4,6 @@ Trends of Polygenic Risk scores of variants associated with inflammatory organ d
 
 
 References for the spatial plot
-https://mgimond.github.io/Spatial/interpolation-in-r.html
-https://mgimond.github.io/MEGUG2016/Tutorial.html
+- https://mgimond.github.io/Spatial/interpolation-in-r.html
+
+- https://mgimond.github.io/MEGUG2016/Tutorial.html
